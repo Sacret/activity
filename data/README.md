@@ -19,7 +19,7 @@ Rows are filed under the year of their `date`.
 | sleep_min, deep_sleep_min, light_sleep_min, awake_min | min, night sleep ending that day | 2016 → |
 | sleep_score | 0–100 | 2018-09 → 2025-09 |
 | nap_min | min | 2021-12 → |
-| weight_kg | kg, last weigh-in of the day | 2016 → 2025-10 |
+| weight_kg | kg, last weigh-in of the day | 2016 → 2026-09 |
 | spo2_avg | % | a handful of days |
 | pai_daily, pai_total | PAI score (total = rolling 7 days) | 2021-12 → 2025-09 |
 | vitality_daily, vitality_total | Mi Fitness "vitality" score | 2025-09 → |
@@ -34,7 +34,7 @@ Before 2018-09 (old bands), some "nights" run 15+ hours. That's the band lying u
 ## weight.csv — one row per weigh-in
 
 `date`, `time`, `weight_kg`, `bmi`, `body_fat_pct`, `muscle_pct`, `water_pct`, `protein_pct`, `bone_mass_kg`, `bmr_kcal`, `visceral_fat`.
-Readings from other people on the shared scale, and misreads, are dropped.
+Readings from other people on the shared scale, and misreads, are dropped. A scale reading with no height is kept only if it is within 3 kg of the nearest known weigh-in.
 
 ## workouts.csv — one row per workout
 
@@ -44,4 +44,5 @@ Readings from other people on the shared scale, and misreads, are dropped.
 
 - 2016-01 → 2017-05: old Mi Fit / Zepp per-year export (`raw data/<year>/`).
 - 2017-05 → 2026-10: Mi Fitness export (`raw data/*_MiFitness_*.csv`). On overlapping days it agrees with the old export.
+- 2023-12 → 2026-09: later Zepp scale exports (`raw data/BODY/`, `raw data/<id>/BODY/`), same format as the old BODY files. They add weigh-ins (with body composition) missing from Mi Fitness. The `HEALTH_DATA` file next to them (body measurements) is empty.
 - Minute-level steps and heart rate are not kept (daily only). GPS tracks are not included.

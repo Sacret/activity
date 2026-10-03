@@ -3,6 +3,7 @@
 
 Sources (in "raw data/"):
   - <year>/ACTIVITY, SLEEP, BODY   old Mi Fit (Zepp) per-year export, 2016-2021
+  - BODY/, <id>/BODY/              later Zepp scale exports, same format, 2023-12 → 2026
   - *_MiFitness_*.csv              new Mi Fitness export, 2017-2026
 
 Output per year: daily.csv, sleep.csv, weight.csv, workouts.csv (see data/README.md).
@@ -24,6 +25,7 @@ PREFIX = "20261003_1598348661_MiFitness_"
 DEFAULT_TZ = 12  # quarter-hours (+03:00), used before the first record with a timezone
 OWNER_HEIGHT = "169.0"  # old BODY export mixes in other scale users; they have a different height
 MIN_WEIGHT, MAX_WEIGHT = 35, 90
+MAX_UNKNOWN_DIFF = 3  # kg; see build_weight
 
 csv.field_size_limit(10**9)
 
@@ -116,7 +118,7 @@ def pick(by_sid, date, prefer=("xiaomisports_app", "default")):
 
 def read_old(kind):
     rows = []
-    for f in sorted(glob.glob(os.path.join(RAW, "20[0-9][0-9]", kind, "*.csv"))):
+    for f in sorted(glob.glob(os.path.join(RAW, "**", kind, "*.csv"), recursive=True)):
         rows += list(csv.DictReader(open(f, encoding="utf-8-sig")))
     return rows
 
@@ -171,6 +173,9 @@ WEIGHT_FIELDS = [("bmi", "bmi"), ("body_fat_rate", "body_fat_pct"), ("muscle_rat
                  ("moisture_rate", "water_pct"), ("protein_rate", "protein_pct"),
                  ("bone_mass", "bone_mass_kg"), ("basal_metabolism", "bmr_kcal"),
                  ("visceral_fat", "visceral_fat")]
+OLD_WEIGHT_FIELDS = [("bmi", "bmi"), ("fatRate", "body_fat_pct"), ("muscleRate", "muscle_pct"),
+                     ("bodyWaterRate", "water_pct"), ("boneMass", "bone_mass_kg"),
+                     ("metabolism", "bmr_kcal"), ("visceralFat", "visceral_fat")]
 
 
 def build_weight(fit, tzl):
@@ -182,12 +187,26 @@ def build_weight(fit, tzl):
         for src, dst in WEIGHT_FIELDS:
             row[dst] = nz(v.get(src))
         entries[int(v["time"])] = row
+    no_height = []
     for r in read_old("BODY"):
         ts = old_ts(r["time"])
         if r["height"] not in ("null", OWNER_HEIGHT):  # another person on the shared scale
             continue
         if ts not in entries and MIN_WEIGHT <= float(r["weight"]) <= MAX_WEIGHT:
-            entries[ts] = {"weight_kg": float(r["weight"]), "bmi": nz(float(r["bmi"])) if r["bmi"] != "null" else None}
+            row = {"weight_kg": float(r["weight"])}
+            for src, dst in OLD_WEIGHT_FIELDS:
+                row[dst] = nz(float(r[src])) if r[src] != "null" else None
+            if r["height"] == "null":
+                no_height.append((ts, row))
+            else:
+                entries[ts] = row
+    # A reading with no height may be anyone; keep it only if close to the nearest known own weigh-in.
+    known = sorted(entries)
+    for ts, row in no_height:
+        i = bisect.bisect_left(known, ts)
+        near = min((known[j] for j in (i - 1, i) if 0 <= j < len(known)), key=lambda k: abs(k - ts))
+        if abs(row["weight_kg"] - entries[near]["weight_kg"]) <= MAX_UNKNOWN_DIFF:
+            entries.setdefault(ts, row)
     out = []
     for ts in sorted(entries):
         tz_q = tzl.at(ts)

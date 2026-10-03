@@ -27,9 +27,10 @@ raw data/            exports from the bracelets' apps (not in git)
 scripts/make_icons.py   →  icons/
 ```
 
-- **`scripts/normalize.py`** merges two exports into one format:
+- **`scripts/normalize.py`** merges the exports into one format:
   - the old Mi Fit / Zepp per-year export (2016–2021)
   - the Mi Fitness export (2017–2026)
+  - later Zepp scale exports with extra weigh-ins (2023–2026)
 
   Overlapping days prefer Mi Fitness. Times use the UTC offset you were actually in, so travel is included. Weigh-ins from other people on a shared scale are dropped, and nothing identifying ends up in `data/`. Columns are documented in [`data/README.md`](data/README.md).
 - **`scripts/build_page.py`** reads `data/` and embeds it into a single `index.html`, with hand-written SVG charts and no libraries.
