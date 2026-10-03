@@ -76,7 +76,7 @@ header h1 { font-size: 28px; font-weight: 650; margin: 0; letter-spacing: -0.01e
 header p { margin: 4px 0 0; color: var(--ink-2); }
 
 .filters {
-  display: flex; gap: 4px; margin: 24px 0 16px; padding-bottom: 4px;
+  display: flex; gap: 4px; margin: 19px -5px 11px; padding: 5px; /* room for the focus ring, which overflow would clip */
   overflow-x: auto; scrollbar-width: thin;
 }
 .filters button {
@@ -722,8 +722,20 @@ function fromHash() {
   const y = +location.hash.slice(1);
   year = YEARS.includes(y) ? y : null;
   render();
+  const active = filters.querySelector('[aria-pressed="true"]');
+  if (active) active.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 addEventListener("hashchange", fromHash);
+// ← / → step through the tabs: All years, 2016 … 2026
+addEventListener("keydown", e => {
+  if ((e.key !== "ArrowLeft" && e.key !== "ArrowRight") || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  if (e.target.closest && e.target.closest("input, textarea, select, [contenteditable]")) return;
+  const tabs = [null, ...YEARS], i = tabs.indexOf(year) + (e.key === "ArrowRight" ? 1 : -1);
+  if (i < 0 || i >= tabs.length) return;
+  e.preventDefault();
+  location.hash = tabs[i] == null ? "" : String(tabs[i]);
+  if (filters.contains(document.activeElement)) filters.children[i].focus();
+});
 let rz;
 addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(render, 150); });
 fromHash();
