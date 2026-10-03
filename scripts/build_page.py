@@ -52,10 +52,15 @@ def main():
 
     workouts = [[r["date"], r["type"], float(r["duration_min"])] for r in rows("workouts")]
 
-    payload = json.dumps({"days": days, "nights": nights, "workouts": workouts}, separators=(",", ":"))
+    # Body composition: every weigh-in with a fat estimate, as [date, weight kg, fat %]
+    comp = [[r["date"], num(r["weight_kg"]), round(float(r["body_fat_pct"]), 1)]
+            for r in rows("weight") if r["body_fat_pct"]]
+
+    payload = json.dumps({"days": days, "nights": nights, "workouts": workouts, "comp": comp}, separators=(",", ":"))
     page = open(os.path.join(ROOT, "scripts", "page.html")).read().replace("__DATA__", payload)
     open(os.path.join(ROOT, "index.html"), "w").write(page)
-    print(f"index.html: {len(days)} days, {len(nights)} nights, {len(workouts)} workouts, {len(page) // 1024} KB")
+    print(f"index.html: {len(days)} days, {len(nights)} nights, {len(workouts)} workouts, "
+          f"{len(comp)} composition readings, {len(page) // 1024} KB")
 
 
 if __name__ == "__main__":

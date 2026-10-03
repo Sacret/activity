@@ -141,6 +141,10 @@ header p { margin: 4px 0 0; color: var(--ink-2); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { display: inline-block; width: 12px; height: 2px; border-radius: 1px; }
 .legend i.box { width: 10px; height: 10px; border-radius: 2px; }
+.legend i.dash { background: repeating-linear-gradient(90deg, var(--ink-2) 0 4px, transparent 4px 7px); }
+.legend i.ring { width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--ink-2); background: var(--surface); }
+.panel-label { color: var(--ink-2); font-size: 12px; margin: 0 0 4px; }
+.panel-label + .chart + .panel-label { margin-top: 12px; }
 
 .records { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .records li { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--grid); padding-bottom: 10px; }
@@ -236,7 +240,20 @@ footer a:hover { color: var(--ink); }
     <article class="card">
       <h2>Weight</h2>
       <p class="desc" id="weight-desc"></p>
+      <div class="legend" id="weight-legend"></div>
       <div class="chart" id="weight"></div>
+    </article>
+
+    <article class="card">
+      <h2 id="wrange-title">Weight range by year</h2>
+      <p class="desc" id="wrange-desc"></p>
+      <div class="chart" id="weight-range"></div>
+    </article>
+
+    <article class="card">
+      <h2>Fat and lean mass</h2>
+      <p class="desc" id="comp-desc"></p>
+      <div id="comp"></div>
     </article>
 
     <article class="card">
@@ -261,7 +278,7 @@ footer a:hover { color: var(--ink); }
   <footer>
     <p>Made by <a href="https://sacret.ru/">Anastasia Abakumova</a> and <a href="https://claude.com/claude-code">Claude Code</a>, Anthropic’s AI coding assistant. The data belongs to Anastasia.</p>
     <p>Data: Mi Band bracelets via Mi Fit / Zepp (2016–2021) and Mi Fitness (2017–2026) exports, normalized by <code>scripts/normalize.py</code>.</p>
-    <p>Heart rate starts in September 2018. Calories are left out because older and newer bands count them differently. Deep-sleep estimates differ between band generations. Nights shorter than 2 h or longer than 14 h (an unworn band scored as sleep) are left out of sleep figures.</p>
+    <p>Heart rate starts in September 2018. Calories are left out because older and newer bands count them differently. Deep-sleep estimates differ between band generations. Nights shorter than 2 h or longer than 14 h (an unworn band scored as sleep) are left out of sleep figures. Fat and lean mass are the smart scale’s estimates; readings taken during pregnancy are left out.</p>
   </footer>
 </main>
 <div id="tip" role="status"></div>
@@ -278,6 +295,10 @@ const toT = d => Date.parse(d + "T00:00:00Z");
 const days = RAW.days.map(([d, steps, dist, sleep, deep, rhr, w, act]) =>
   ({ d, t: toT(d), y: +d.slice(0, 4), m: d.slice(0, 7), steps, dist, sleep, deep, rhr, w, act }));
 const nights = RAW.nights.map(([d, bed, wake, dur]) => ({ d, t: toT(d), y: +d.slice(0, 4), m: d.slice(0, 7), bed, wake, dur }));
+const PREGNANCY = { from: "2023-05-31", to: "2024-03-01", label: "Pregnancy" };
+// The scale's body-fat estimate means nothing during pregnancy, so those readings are left out.
+const comp = RAW.comp.map(([d, w, fat]) => ({ d, t: toT(d), y: +d.slice(0, 4), m: d.slice(0, 7), fat: w * fat / 100, lean: w * (1 - fat / 100) }))
+  .filter(x => x.t < toT(PREGNANCY.from) || x.t > toT(PREGNANCY.to));
 const workouts = RAW.workouts.map(([d, type, dur]) => ({ d, t: toT(d), y: +d.slice(0, 4), m: d.slice(0, 7), type, dur }));
 const YEARS = [...new Set(days.map(x => x.y))].sort();
 const byDate = new Map(days.map(x => [x.d, x]));
@@ -296,6 +317,14 @@ const fmtHM = m => { if (m == null) return "–"; m = Math.round(m); return `${M
 const fmtClock = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; };
 const fmtDate = d => { const t = new Date(toT(d)); return `${WEEKDAYS[(t.getUTCDay() + 6) % 7]}, ${t.getUTCDate()} ${MONTHS[t.getUTCMonth()]} ${t.getUTCFullYear()}`; };
 const inRange = list => year == null ? list : list.filter(x => x.y === year);
+
+// Pre-pregnancy weight: average weigh-in over the 3 months before. "Back to it": first day after
+// delivery when the trailing 7-day average weigh-in is at or below that.
+const PRE_WEIGHT = mean(vals(days.filter(x => x.t >= toT(PREGNANCY.from) - 90 * DAY && x.t < toT(PREGNANCY.from)), "w"));
+const BACK = (() => {
+  const after = days.filter(x => x.w != null && x.t > toT(PREGNANCY.to));
+  return after.find(x => mean(vals(after.filter(y => y.t > x.t - 7 * DAY && y.t <= x.t), "w")) <= PRE_WEIGHT);
+})();
 
 const NS = "http://www.w3.org/2000/svg";
 function el(tag, attrs = {}, parent) {
@@ -377,14 +406,15 @@ function emptyChart(host, msg = "No data for this period") {
   host.replaceChildren(h("div", { className: "empty", textContent: msg }));
 }
 
-function lineChart(host, { lines, yFmt, tickFmt = yFmt, zero = false, unit = 0, bands = [] }) {
+// refs: dashed horizontal lines {v, label}; marks: a ring on a ref line at a date {t, v, label}
+function lineChart(host, { lines, yFmt, tickFmt = yFmt, zero = false, unit = 0, bands = [], height = HEIGHT, ticks: fixedTicks, refs = [], marks = [] }) {
   if (!lines.some(l => l.pts.length)) return emptyChart(host);
-  const W = host.clientWidth, H = HEIGHT;
+  const W = host.clientWidth, H = height;
   const all = lines.flatMap(l => l.pts);
   const xs = [...new Set(all.map(p => p[0]))].sort((a, b) => a - b);
-  let lo = Math.min(...all.map(p => p[1])), hi = Math.max(...all.map(p => p[1]));
+  let lo = Math.min(...all.map(p => p[1]), ...refs.map(r => r.v)), hi = Math.max(...all.map(p => p[1]), ...refs.map(r => r.v));
   if (zero) lo = 0;
-  const ticks = niceTicks(lo, hi, 4, unit);
+  const ticks = fixedTicks || niceTicks(lo, hi, 4, unit);
   const y0 = ticks[0], y1 = ticks[ticks.length - 1];
   const x0 = xs[0], x1 = xs[xs.length - 1] === x0 ? x0 + DAY : xs[xs.length - 1];
   const X = t => M.l + (t - x0) / (x1 - x0) * (W - M.l - M.r);
@@ -421,6 +451,7 @@ function lineChart(host, { lines, yFmt, tickFmt = yFmt, zero = false, unit = 0, 
     el("rect", { x: X(a), y: M.t, width: X(z) - X(a), height: H - M.t - M.b, style: "fill:var(--band)" }, svg);
     text(svg, X(a) + 6, H - M.b - 6, b.label, { class: "vlabel" });
   }
+  for (const r of refs) el("line", { x1: M.l, x2: W - M.r, y1: Y(r.v), y2: Y(r.v), stroke: "var(--ink-2)", "stroke-width": 1, "stroke-dasharray": "4 3" }, svg);
   for (const l of lines) {
     let d = "", bridge = "", prev = null;
     for (const [t, v] of l.pts) {
@@ -431,8 +462,17 @@ function lineChart(host, { lines, yFmt, tickFmt = yFmt, zero = false, unit = 0, 
     }
     if (bridge) el("path", { d: bridge, fill: "none", stroke: l.color, "stroke-opacity": 0.3, "stroke-width": 2, "stroke-linecap": "round" }, svg);
     el("path", { d, fill: "none", stroke: l.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+    // a point with no neighbour on either side draws no line, so give it a dot
+    l.pts.forEach(([t, v], i) => {
+      const near = j => j >= 0 && j < l.pts.length && Math.abs(l.pts[j][0] - t) <= gap;
+      if (!near(i - 1) && !near(i + 1)) el("circle", { cx: X(t), cy: Y(v), r: 3, fill: l.color }, svg);
+    });
     const last = l.pts[l.pts.length - 1];
     if (last) el("circle", { cx: X(last[0]), cy: Y(last[1]), r: 4, fill: l.color, stroke: "var(--surface)", "stroke-width": 2 }, svg);
+  }
+  for (const mk of marks) {
+    if (mk.t < x0 || mk.t > x1) continue;
+    el("circle", { cx: X(mk.t), cy: Y(mk.v), r: 5, fill: "var(--surface)", stroke: "var(--ink-2)", "stroke-width": 2 }, svg);
   }
   // crosshair
   const cross = el("g", { style: "display:none", "pointer-events": "none" }, svg);
@@ -455,6 +495,8 @@ function lineChart(host, { lines, yFmt, tickFmt = yFmt, zero = false, unit = 0, 
       rows.push({ color: l.color, value: v == null ? "–" : yFmt(v), label: lines.length > 1 ? l.name : "" });
     });
     for (const b of bands) if (best >= toT(b.from) && best <= toT(b.to)) rows.push({ value: b.label });
+    for (const r of refs) rows.push({ value: yFmt(r.v), label: r.label });
+    for (const mk of marks) if (bucketKey(mk.t) === best) rows.push({ value: mk.label });
     showTip(e, bucketLabel(best), rows);
   });
   hit.addEventListener("pointerleave", () => { cross.style.display = "none"; hideTip(); });
@@ -514,6 +556,38 @@ function rangeChart(host, { items }) {
       showTip(e, it.title, [{ value: fmtClock(it.bed), label: "typical bedtime" }, { value: fmtClock(it.wake), label: "typical wake-up" }]);
     });
     hit.addEventListener("pointerleave", () => { bar.style.opacity = 1; hideTip(); });
+  });
+  host.replaceChildren(svg);
+}
+
+function spanChart(host, { items, fmt, height = HEIGHT }) {
+  // items: {label, title, lo, mid, hi, n} — a bar from lo to hi with a dot at mid
+  if (!items.length) return emptyChart(host);
+  const W = host.clientWidth, H = height;
+  const ticks = niceTicks(Math.min(...items.map(i => i.lo)), Math.max(...items.map(i => i.hi)), 4);
+  const y0 = ticks[0], y1 = ticks[ticks.length - 1];
+  const Y = v => M.t + (1 - (v - y0) / (y1 - y0)) * (H - M.t - M.b);
+  const band = (W - M.l - M.r) / items.length, bw = Math.min(14, band * 0.5);
+  const svg = el("svg", { width: W, height: H, role: "img" });
+  const ax = el("g", { class: "axis" }, svg);
+  for (const v of ticks) {
+    el("line", { x1: M.l, x2: W - M.r, y1: Y(v), y2: Y(v), class: v === y0 ? "baseline" : "gridline" }, ax);
+    text(ax, M.l - 6, Y(v) + 4, String(v), { "text-anchor": "end" });
+  }
+  const labelEvery = Math.ceil(30 / band);
+  items.forEach((it, i) => {
+    const cx = M.l + band * i + band / 2;
+    if (i % labelEvery === 0) text(ax, cx, H - 6, it.label, { "text-anchor": "middle" });
+    const g = el("g", {}, svg);
+    el("path", { d: barPath(cx - bw / 2, Y(it.hi), bw, Y(it.lo) - Y(it.hi), 4, true), fill: "var(--s1)", "fill-opacity": 0.35 }, g);
+    el("circle", { cx, cy: Y(it.mid), r: 4, fill: "var(--s1)", stroke: "var(--surface)", "stroke-width": 2 }, g);
+    const hit = el("rect", { x: cx - band / 2, y: M.t, width: band, height: H - M.t - M.b, fill: "transparent" }, svg);
+    hit.addEventListener("pointermove", e => {
+      g.style.opacity = 0.75;
+      showTip(e, it.title, [{ value: fmt(it.hi), label: "highest" }, { color: "var(--s1)", value: fmt(it.mid), label: "median" },
+        { value: fmt(it.lo), label: "lowest" }, { value: String(it.n), label: it.n === 1 ? "day weighed" : "days weighed" }]);
+    });
+    hit.addEventListener("pointerleave", () => { g.style.opacity = 1; hideTip(); });
   });
   host.replaceChildren(svg);
 }
@@ -703,9 +777,29 @@ function renderTable(D, N, Wk) {
   document.getElementById("table-title").textContent = year == null ? "By year" : `By month, ${year}`;
 }
 
-const PREGNANCY = { from: "2023-05-31", to: "2024-03-01", label: "Pregnancy" };
-
 const WORKOUT_NAMES = { free_training: "Free training", stretch: "Stretching", outdoor_walking: "Outdoor walk", indoor_running: "Treadmill", pool_swimming: "Pool swim", backcountry_skiing: "Skiing" };
+
+function renderComp(C, per) {
+  const host = document.getElementById("comp"), desc = document.getElementById("comp-desc");
+  if (!C.length) {
+    desc.textContent = "Smart scale estimate, kg";
+    return emptyChart(host, "No body composition readings in this period");
+  }
+  desc.textContent = `Smart scale estimate, average kg by ${per}, ${fmtInt(C.length)} readings. Both panels share one scale.`;
+  const fat = series(C, "fat"), lean = series(C, "lean");
+  // same kg per pixel in both panels, so a change in one compares directly with the other
+  const ext = pts => [Math.min(...pts.map(p => p[1])), Math.max(...pts.map(p => p[1]))];
+  const [fl, fh] = ext(fat), [ll, lh] = ext(lean);
+  const t0 = niceTicks(0, Math.max(fh - fl, lh - ll, 1), 2), step = t0[1] - t0[0];
+  const n = Math.max(Math.ceil(fh / step) - Math.floor(fl / step), Math.ceil(lh / step) - Math.floor(ll / step), 1);
+  const ticksFrom = lo => Array.from({ length: n + 1 }, (_, i) => +((Math.floor(lo / step) + i) * step).toFixed(10));
+  const fatBox = h("div", { className: "chart" }), leanBox = h("div", { className: "chart" });
+  host.replaceChildren(h("p", { className: "panel-label", textContent: "Fat mass" }), fatBox,
+    h("p", { className: "panel-label", textContent: "Lean mass (muscle, water, bone)" }), leanBox);
+  const opts = { yFmt: v => `${fmt1(v)} kg`, tickFmt: v => String(v), bands: [PREGNANCY], height: 130 };
+  lineChart(fatBox, { ...opts, lines: [{ name: "Fat mass", color: "var(--s2)", pts: fat }], ticks: ticksFrom(fl) });
+  lineChart(leanBox, { ...opts, lines: [{ name: "Lean mass", color: "var(--s1)", pts: lean }], ticks: ticksFrom(ll) });
+}
 
 function render() {
   hideTip();
@@ -747,7 +841,28 @@ function render() {
   lineChart(document.getElementById("rhr"), { lines: [{ name: "Resting HR", color: "var(--s1)", pts: series(D, "rhr") }], yFmt: v => `${fmtInt(v)} bpm`, tickFmt: v => String(v) });
 
   document.getElementById("weight-desc").textContent = `Average weigh-in, kg, by ${per}`;
-  lineChart(document.getElementById("weight"), { lines: [{ name: "Weight", color: "var(--s1)", pts: series(D, "w") }], yFmt: v => `${fmt1(v)} kg`, tickFmt: v => String(v), bands: [PREGNANCY] });
+  // the pre-pregnancy reference only where the pregnancy and the way back are in view
+  const showPre = PRE_WEIGHT != null && (year == null || (year >= +PREGNANCY.from.slice(0, 4) && year <= (BACK ? BACK.y : year)));
+  const refs = showPre ? [{ v: PRE_WEIGHT, label: "before pregnancy" }] : [];
+  const marks = showPre && BACK ? [{ t: BACK.t, v: PRE_WEIGHT, label: "Back to pre-pregnancy weight" }] : [];
+  const wLegend = document.getElementById("weight-legend");
+  wLegend.style.display = showPre ? "" : "none";
+  if (showPre) {
+    const sw = (cls, s) => h("span", {}, h("i", { className: cls }), s);
+    wLegend.replaceChildren(sw("dash", `Before pregnancy, ${fmt1(PRE_WEIGHT)} kg`), ...(BACK ? [sw("ring", `Back to it ${fmtDate(BACK.d).slice(5)}`)] : []));
+  }
+  lineChart(document.getElementById("weight"), { lines: [{ name: "Weight", color: "var(--s1)", pts: series(D, "w") }], yFmt: v => `${fmt1(v)} kg`, tickFmt: v => String(v), bands: [PREGNANCY], refs, marks });
+
+  document.getElementById("wrange-title").textContent = year == null ? "Weight range by year" : "Weight range by month";
+  document.getElementById("wrange-desc").textContent = `Lowest to highest day, kg; dot = median`;
+  spanChart(document.getElementById("weight-range"), {
+    fmt: v => `${fmt1(v)} kg`, height: 300,
+    items: periodItems(D, "w").map(p => ({ ...p, ws: vals(p.sub, "w") })).filter(p => p.ws.length).map(p => ({
+      label: p.label, title: p.tipTitle, lo: Math.min(...p.ws), hi: Math.max(...p.ws), mid: median(p.ws), n: p.ws.length,
+    })),
+  });
+
+  renderComp(inRange(comp), per);
 
   const types = new Map();
   for (const w of Wk) { const t = types.get(w.type) || types.set(w.type, { value: 0, count: 0 }).get(w.type); t.value += w.dur / 60; t.count++; }
