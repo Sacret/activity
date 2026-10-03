@@ -1,0 +1,2 @@
+date,type,start,end,duration_min,distance_m,calories_kcal,steps,avg_hr,max_hr,min_hr,avg_pace_s_per_km,elevation_gain_m,train_load
+2017-10-08,outdoor_walking,2017-10-08T12:32+03:00,2017-10-08T13:51+03:00,79.0,2463,58,4071,,,,1922,,
