@@ -26,6 +26,7 @@ DEFAULT_TZ = 12  # quarter-hours (+03:00), used before the first record with a t
 OWNER_HEIGHT = "169.0"  # old BODY export mixes in other scale users; they have a different height
 MIN_WEIGHT, MAX_WEIGHT = 35, 90
 MAX_UNKNOWN_DIFF = 3  # kg; see build_weight
+EXCLUDED_WORKOUTS = {"2026-04-26T15:33+04:00"}  # local start times of workouts started by accident
 
 csv.field_size_limit(10**9)
 
@@ -231,7 +232,7 @@ def build_workouts(tzl):
             "elevation_gain_m": rise if rise and rise > 0 else None,
             "train_load": nz(v.get("train_load")),
         })
-    return sorted(out, key=lambda w: w["start"])
+    return sorted((w for w in out if w["start"] not in EXCLUDED_WORKOUTS), key=lambda w: w["start"])
 
 
 def build_daily(agg, fit, sleep, weight):
