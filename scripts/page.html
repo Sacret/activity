@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mi activity</title>
 <meta name="description" content="Ten years of steps, sleep, heart rate, weight and workouts from Mi Band bracelets.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='9' width='3' height='6' rx='1' fill='%232a78d6'/%3E%3Crect x='6.5' y='5' width='3' height='10' rx='1' fill='%232a78d6'/%3E%3Crect x='12' y='1' width='3' height='14' rx='1' fill='%232a78d6'/%3E%3C/svg%3E">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <style>
 :root {
   color-scheme: light;
@@ -76,6 +79,8 @@ body {
 }
 main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 48px; }
 header h1 { font-size: 28px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+header h1 { display: flex; align-items: center; gap: 10px; }
+header h1 img { flex: none; }
 header p { margin: 4px 0 0; color: var(--ink-2); }
 
 .filters {
@@ -156,7 +161,7 @@ footer p { margin: 4px 0; }
 <body>
 <main>
   <header>
-    <h1>Mi activity</h1>
+    <h1><img src="icons/favicon.svg" width="28" height="28" alt="">Mi activity</h1>
     <p id="subtitle"></p>
   </header>
 
