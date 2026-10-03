@@ -18,6 +18,7 @@
   --axis: #c3c2b7;
   --border: rgba(11, 11, 11, 0.10);
   --hover: rgba(11, 11, 11, 0.05);
+  --band: #f0efec;
   --s1: #2a78d6;
   --s2: #eb6834;
   --up: #006300;
@@ -37,6 +38,7 @@
     --axis: #383835;
     --border: rgba(255, 255, 255, 0.10);
     --hover: rgba(255, 255, 255, 0.06);
+    --band: #262624;
     --s1: #3987e5;
     --s2: #d95926;
     --up: #0ca30c;
@@ -56,6 +58,7 @@
   --axis: #383835;
   --border: rgba(255, 255, 255, 0.10);
   --hover: rgba(255, 255, 255, 0.06);
+  --band: #262624;
   --s1: #3987e5;
   --s2: #d95926;
   --up: #0ca30c;
@@ -345,7 +348,7 @@ function emptyChart(host, msg = "No data for this period") {
   host.replaceChildren(h("div", { className: "empty", textContent: msg }));
 }
 
-function lineChart(host, { lines, yFmt, tickFmt = yFmt, zero = false, unit = 0 }) {
+function lineChart(host, { lines, yFmt, tickFmt = yFmt, zero = false, unit = 0, bands = [] }) {
   if (!lines.some(l => l.pts.length)) return emptyChart(host);
   const W = host.clientWidth, H = HEIGHT;
   const all = lines.flatMap(l => l.pts);
@@ -382,6 +385,13 @@ function lineChart(host, { lines, yFmt, tickFmt = yFmt, zero = false, unit = 0 }
       text(ax, Math.max(M.l, X(t)), H - 6, MONTHS[mo], { "text-anchor": "start" });
     }
   }
+  // shaded periods (e.g. pregnancy), clipped to the visible range
+  for (const b of bands) {
+    const a = Math.max(toT(b.from), x0), z = Math.min(toT(b.to), x1);
+    if (z <= a) continue;
+    el("rect", { x: X(a), y: M.t, width: X(z) - X(a), height: H - M.t - M.b, style: "fill:var(--band)" }, svg);
+    text(svg, X(a) + 6, H - M.b - 6, b.label, { class: "vlabel" });
+  }
   for (const l of lines) {
     let d = "", bridge = "", prev = null;
     for (const [t, v] of l.pts) {
@@ -415,6 +425,7 @@ function lineChart(host, { lines, yFmt, tickFmt = yFmt, zero = false, unit = 0 }
       if (v != null) { dots[i].setAttribute("cx", X(best)); dots[i].setAttribute("cy", Y(v)); }
       rows.push({ color: l.color, value: v == null ? "–" : yFmt(v), label: lines.length > 1 ? l.name : "" });
     });
+    for (const b of bands) if (best >= toT(b.from) && best <= toT(b.to)) rows.push({ value: b.label });
     showTip(e, bucketLabel(best), rows);
   });
   hit.addEventListener("pointerleave", () => { cross.style.display = "none"; hideTip(); });
@@ -658,6 +669,8 @@ function renderTable(D, N, Wk) {
   document.getElementById("table-title").textContent = year == null ? "By year" : `By month, ${year}`;
 }
 
+const PREGNANCY = { from: "2023-05-31", to: "2024-03-01", label: "Pregnancy" };
+
 const WORKOUT_NAMES = { free_training: "Free training", stretch: "Stretching", outdoor_walking: "Outdoor walk", indoor_running: "Treadmill", pool_swimming: "Pool swim", backcountry_skiing: "Skiing" };
 
 function render() {
@@ -700,7 +713,7 @@ function render() {
   lineChart(document.getElementById("rhr"), { lines: [{ name: "Resting HR", color: "var(--s1)", pts: series(D, "rhr") }], yFmt: v => `${fmtInt(v)} bpm`, tickFmt: v => String(v) });
 
   document.getElementById("weight-desc").textContent = `Average weigh-in, kg, by ${per}`;
-  lineChart(document.getElementById("weight"), { lines: [{ name: "Weight", color: "var(--s1)", pts: series(D, "w") }], yFmt: v => `${fmt1(v)} kg`, tickFmt: v => String(v) });
+  lineChart(document.getElementById("weight"), { lines: [{ name: "Weight", color: "var(--s1)", pts: series(D, "w") }], yFmt: v => `${fmt1(v)} kg`, tickFmt: v => String(v), bands: [PREGNANCY] });
 
   const types = new Map();
   for (const w of Wk) { const t = types.get(w.type) || types.set(w.type, { value: 0, count: 0 }).get(w.type); t.value += w.dur / 60; t.count++; }
