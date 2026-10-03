@@ -297,7 +297,7 @@ const days = RAW.days.map(([d, steps, dist, sleep, deep, rhr, w, act]) =>
 const nights = RAW.nights.map(([d, bed, wake, dur]) => ({ d, t: toT(d), y: +d.slice(0, 4), m: d.slice(0, 7), bed, wake, dur }));
 const PREGNANCY = { from: "2023-05-31", to: "2024-03-01", label: "Pregnancy" };
 // The scale's body-fat estimate means nothing during pregnancy, so those readings are left out.
-const comp = RAW.comp.map(([d, w, fat]) => ({ d, t: toT(d), y: +d.slice(0, 4), m: d.slice(0, 7), fat: w * fat / 100, lean: w * (1 - fat / 100) }))
+const comp = RAW.comp.map(([d, w, fat, muscle, bone, visceral]) => ({ d, t: toT(d), y: +d.slice(0, 4), m: d.slice(0, 7), fat: w * fat / 100, lean: w * (1 - fat / 100), fatPct: fat, muscle, bone, visceral }))
   .filter(x => x.t < toT(PREGNANCY.from) || x.t > toT(PREGNANCY.to));
 const workouts = RAW.workouts.map(([d, type, dur]) => ({ d, t: toT(d), y: +d.slice(0, 4), m: d.slice(0, 7), type, dur }));
 const YEARS = [...new Set(days.map(x => x.y))].sort();
@@ -316,6 +316,8 @@ const compact = v => v == null ? "–" : Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(
 const fmtHM = m => { if (m == null) return "–"; m = Math.round(m); return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`; };
 const fmtClock = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; };
 const fmtDate = d => { const t = new Date(toT(d)); return `${WEEKDAYS[(t.getUTCDay() + 6) % 7]}, ${t.getUTCDate()} ${MONTHS[t.getUTCMonth()]} ${t.getUTCFullYear()}`; };
+const bmi = w => w / RAW.height ** 2;
+const fmtKgBmi = w => `${fmt1(w)} kg · BMI ${fmt1(bmi(w))}`;
 const inRange = list => year == null ? list : list.filter(x => x.y === year);
 
 // Pre-pregnancy weight: average weigh-in over the 3 months before. "Back to it": first day after
@@ -712,7 +714,7 @@ function renderTiles(D, N, Wk) {
     tile("Sleep per night", fmtHM(mean(vals(N, "dur"))), `deep ${fmtHM(mean(vals(D, "deep")))}`),
     tile("Resting heart rate", D.some(x => x.rhr) ? `${fmtInt(mean(vals(D, "rhr")))} bpm` : "–", D.some(x => x.rhr) ? `range ${Math.min(...vals(D, "rhr"))}–${Math.max(...vals(D, "rhr"))}` : "not recorded"),
     tile("Workouts", fmtInt(Wk.length), Wk.length ? `${fmt1(hours)} hours` : "none recorded"),
-    tile("Weight", ws.length ? `${fmt1(ws[ws.length - 1].w)} kg` : "–", ws.length ? (wSub || "latest") : "not recorded"),
+    tile("Weight", ws.length ? `${fmt1(ws[ws.length - 1].w)} kg` : "–", ws.length ? `BMI ${fmt1(bmi(ws[ws.length - 1].w))} · ${wSub || "latest"}` : "not recorded"),
   );
 }
 
@@ -757,19 +759,23 @@ function renderRecords(D) {
 function renderTable(D, N, Wk) {
   const keys = year == null ? YEARS.map(String) : MONTHS.map((_, i) => `${year}-${String(i + 1).padStart(2, "0")}`);
   const pick = (list, k) => list.filter(x => (year == null ? String(x.y) : x.m) === k);
-  const cols = ["Period", "Avg steps", "Total km", "Sleep", "Deep sleep", "Bedtime", "Resting HR", "Weight", "Workouts"];
+  const cols = ["Period", "Avg steps", "Total km", "Sleep", "Deep sleep", "Bedtime", "Resting HR", "Weight", "Body fat", "Muscle", "Bone mass", "Visceral fat", "Workouts"];
+  const C = inRange(comp), pct = v => v == null ? "–" : `${fmt1(v)}%`;
   const table = document.getElementById("table");
   const thead = h("thead", {}, h("tr", {}, ...cols.map(c => h("th", { scope: "col", textContent: c }))));
   const tbody = h("tbody");
   for (const k of keys) {
-    const d = pick(D, k), n = pick(N, k), w = pick(Wk, k);
+    const d = pick(D, k), n = pick(N, k), w = pick(Wk, k), c = pick(C, k);
+    const bone = mean(vals(c, "bone")), visc = median(vals(c, "visceral"));
     if (!d.length && !n.length) continue;
     const rhr = mean(vals(d, "rhr")), wt = mean(vals(d, "w")), bed = median(vals(n, "bed"));
     const cells = [
       year == null ? k : `${MONTHS[+k.slice(5) - 1]} ${year}`,
       fmtInt(mean(vals(d, "steps"))), fmtInt(sum(vals(d, "dist")) / 1000),
       fmtHM(mean(vals(n, "dur"))), fmtHM(mean(vals(d, "deep"))), bed == null ? "–" : fmtClock(bed),
-      rhr == null ? "–" : fmtInt(rhr), wt == null ? "–" : fmt1(wt), w.length ? String(w.length) : "–",
+      rhr == null ? "–" : fmtInt(rhr), wt == null ? "–" : fmt1(wt),
+      pct(mean(vals(c, "fatPct"))), pct(mean(vals(c, "muscle"))), bone == null ? "–" : `${bone.toFixed(2)} kg`, visc == null ? "–" : `level ${Math.round(visc)}`,
+      w.length ? String(w.length) : "–",
     ];
     tbody.append(h("tr", {}, ...cells.map((c, i) => i === 0 ? h("th", { scope: "row", textContent: c }) : h("td", { textContent: c, className: c === "–" ? "na" : "" }))));
   }
@@ -851,12 +857,12 @@ function render() {
     const sw = (cls, s) => h("span", {}, h("i", { className: cls }), s);
     wLegend.replaceChildren(sw("dash", `Before pregnancy, ${fmt1(PRE_WEIGHT)} kg`), ...(BACK ? [sw("ring", `Back to it ${fmtDate(BACK.d).slice(5)}`)] : []));
   }
-  lineChart(document.getElementById("weight"), { lines: [{ name: "Weight", color: "var(--s1)", pts: series(D, "w") }], yFmt: v => `${fmt1(v)} kg`, tickFmt: v => String(v), bands: [PREGNANCY], refs, marks });
+  lineChart(document.getElementById("weight"), { lines: [{ name: "Weight", color: "var(--s1)", pts: series(D, "w") }], yFmt: fmtKgBmi, tickFmt: v => String(v), bands: [PREGNANCY], refs, marks });
 
   document.getElementById("wrange-title").textContent = year == null ? "Weight range by year" : "Weight range by month";
   document.getElementById("wrange-desc").textContent = `Lowest to highest day, kg; dot = median`;
   spanChart(document.getElementById("weight-range"), {
-    fmt: v => `${fmt1(v)} kg`, height: 300,
+    fmt: fmtKgBmi, height: 300,
     items: periodItems(D, "w").map(p => ({ ...p, ws: vals(p.sub, "w") })).filter(p => p.ws.length).map(p => ({
       label: p.label, title: p.tipTitle, lo: Math.min(...p.ws), hi: Math.max(...p.ws), mid: median(p.ws), n: p.ws.length,
     })),

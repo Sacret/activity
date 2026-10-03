@@ -52,11 +52,17 @@ def main():
 
     workouts = [[r["date"], r["type"], float(r["duration_min"])] for r in rows("workouts")]
 
-    # Body composition: every weigh-in with a fat estimate, as [date, weight kg, fat %]
-    comp = [[r["date"], num(r["weight_kg"]), round(float(r["body_fat_pct"]), 1)]
+    # Body composition: every weigh-in with a fat estimate,
+    # as [date, weight kg, fat %, muscle %, bone mass kg, visceral fat level]
+    comp = [[r["date"], num(r["weight_kg"]), round(float(r["body_fat_pct"]), 1),
+             round(float(r["muscle_pct"]), 1) if r["muscle_pct"] else None,
+             round(float(r["bone_mass_kg"]), 2) if r["bone_mass_kg"] else None, num(r["visceral_fat"])]
             for r in rows("weight") if r["body_fat_pct"]]
+    # Height in m, recovered from the scale's own BMI readings (BMI = kg / m²)
+    heights = sorted((float(r["weight_kg"]) / float(r["bmi"])) ** 0.5 for r in rows("weight") if r["bmi"])
+    height = round(heights[len(heights) // 2], 2)
 
-    payload = json.dumps({"days": days, "nights": nights, "workouts": workouts, "comp": comp}, separators=(",", ":"))
+    payload = json.dumps({"days": days, "nights": nights, "workouts": workouts, "comp": comp, "height": height}, separators=(",", ":"))
     page = open(os.path.join(ROOT, "scripts", "page.html")).read().replace("__DATA__", payload)
     open(os.path.join(ROOT, "index.html"), "w").write(page)
     print(f"index.html: {len(days)} days, {len(nights)} nights, {len(workouts)} workouts, "
