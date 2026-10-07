@@ -1,10 +1,10 @@
 # Mi activity
 
-Ten years of my Mi Band data — steps, sleep, heart rate, weight and workouts — on one page.
+Several years of my Mi Band data — steps, sleep, heart rate, weight and workouts — on one page.
 
 **Live:** https://sacret.github.io/activity/
 
-[![Mi activity](og-image.png)](https://sacret.github.io/activity/)
+[![Mi activity](og-image.jpg)](https://sacret.github.io/activity/)
 
 ## What's on the page
 
@@ -23,7 +23,7 @@ Pick a year with the tabs at the top or the ← / → keys. Every view works in 
 raw data/            exports from the bracelets' apps (not in git)
   └─ scripts/normalize.py   →  data/<year>/{daily,sleep,weight,workouts}.csv
       └─ scripts/build_page.py   →  index.html   (template: scripts/page.html)
-          └─ scripts/make_og_image.py   →  og-image.png
+          └─ scripts/make_og_image.py   →  og-image.jpg
 scripts/make_icons.py   →  icons/
 ```
 
@@ -34,7 +34,7 @@ scripts/make_icons.py   →  icons/
 
   Overlapping days prefer Mi Fitness. Times use the UTC offset you were actually in, so travel is included. Weigh-ins from other people on a shared scale are dropped, and nothing identifying ends up in `data/`. Columns are documented in [`data/README.md`](data/README.md).
 - **`scripts/build_page.py`** reads `data/` and embeds it into a single `index.html`, with hand-written SVG charts and no libraries.
-- **`scripts/make_og_image.py`** renders the social preview image with headless Google Chrome.
+- **`scripts/make_og_image.py`** draws the social preview card (favicon, title, a blue bar) with `scripts/og_card.py` and headless Google Chrome.
 
 Only the Python standard library is needed, plus [Pillow](https://pypi.org/project/pillow/) for `make_icons.py` and Google Chrome for `make_og_image.py`.
 
