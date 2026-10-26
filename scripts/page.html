@@ -101,6 +101,22 @@ header h1 { font-size: 28px; font-weight: 650; margin: 0; letter-spacing: -0.01e
 header h1 { display: flex; align-items: center; gap: 10px; }
 header h1 img { flex: none; }
 header p { margin: 4px 0 0; color: var(--ink-2); }
+header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+
+/* Language switch, top right. It keeps clear of the GitHub corner, which overlaps the
+   page column once the window is narrower than the column plus the corner. */
+.lang {
+  display: flex; flex: none; gap: 2px; padding: 2px; margin-top: 6px;
+  border: 1px solid var(--border); border-radius: 999px;
+  margin-right: max(0px, calc(88px - (100vw - min(100vw, 1080px)) / 2 - 16px));
+}
+.lang button {
+  font: inherit; font-size: 12px; line-height: 18px; color: var(--ink-2); background: transparent;
+  border: 0; border-radius: 999px; padding: 1px 8px; cursor: pointer;
+}
+.lang button:hover { background: var(--hover); }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.lang button:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
 
 .filters {
   display: flex; gap: 4px; margin: 19px -5px 0; padding: 5px; /* room for the focus ring, which overflow would clip */
@@ -138,6 +154,10 @@ html { scroll-padding-top: calc(var(--stuck-h, 0px) + 12px); }
 .bar.stuck .filters { flex: 1; min-width: 0; margin: 0 -5px; scrollbar-width: none; }
 .bar.stuck .filters::-webkit-scrollbar { display: none; }
 .bar.stuck .filters button { padding: 2px 10px; }
+/* Pinned, the header's parts join the bar's row, and the language switch goes last, after the years. */
+.bar.stuck header { display: contents; }
+.bar.stuck .lang { order: 1; margin: 0; }
+.bar.stuck .head { flex: none; }
 /* Narrow window: the mark alone stands for the name, the room goes to the years. */
 @media (max-width: 520px) { .bar.stuck h1 .name { display: none; } }
 
@@ -147,6 +167,7 @@ html { scroll-padding-top: calc(var(--stuck-h, 0px) + 12px); }
 .tile.hero { grid-column: span 2; }
 .tile .label { color: var(--ink-2); font-size: 13px; }
 .tile .value { font-size: 24px; font-weight: 600; margin-top: 2px; }
+.tile .value .u { font-size: 15px; font-weight: 500; color: var(--ink-2); } /* units: "65 bpm", "8 ч 03 мин" stay on one line */
 .tile.hero .value { font-size: 48px; line-height: 1.1; letter-spacing: -0.02em; }
 .tile .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
 .tile .sub .up { color: var(--up); }
@@ -227,65 +248,68 @@ footer a:hover { color: var(--ink); }
 <main>
   <!-- Scrolled past, the bar pins to the top, shrunk to one row: mark, name and the year tabs. -->
   <div class="bar" id="bar">
-    <a href="https://github.com/Sacret/activity" target="_blank" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+    <a href="https://github.com/Sacret/activity" target="_blank" class="github-corner" aria-label="View source on GitHub" data-i18n-label="source"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
     <header>
-      <h1><img src="icons/favicon.svg" width="28" height="28" alt=""><span class="name">Mi activity</span></h1>
-      <p id="subtitle"></p>
+      <div class="head">
+        <h1><img src="icons/favicon.svg" width="28" height="28" alt=""><span class="name">Mi activity</span></h1>
+        <p id="subtitle"></p>
+      </div>
+      <nav class="lang" id="lang" aria-label="Language" data-i18n-label="language"><button type="button" lang="en" data-lang="en">EN</button><button type="button" lang="ru" data-lang="ru">RU</button></nav>
     </header>
 
-    <nav class="filters" id="filters" aria-label="Year"></nav>
+    <nav class="filters" id="filters" aria-label="Year" data-i18n-label="year"></nav>
   </div>
   <!-- Holds the bar's place in the flow while it is pinned, so the page doesn't jump. -->
   <div class="barspace" id="barspace"></div>
 
-  <section class="tiles" id="tiles" aria-label="Summary"></section>
+  <section class="tiles" id="tiles" aria-label="Summary" data-i18n-label="summary"></section>
 
   <section class="grid">
     <article class="card wide">
-      <h2>Daily steps</h2>
+      <h2 data-i18n="dailySteps">Daily steps</h2>
       <p class="desc" id="heat-desc">Every day, stronger colour = more steps</p>
       <div class="chart" id="heatmap"></div>
     </article>
 
     <article class="card wide">
-      <h2>Steps over time</h2>
+      <h2 data-i18n="stepsOverTime">Steps over time</h2>
       <p class="desc" id="steps-desc"></p>
       <div class="chart" id="steps-trend"></div>
     </article>
 
     <article class="card">
       <h2 id="period-title">Average steps by year</h2>
-      <p class="desc">Average daily steps</p>
+      <p class="desc" data-i18n="avgDailySteps">Average daily steps</p>
       <div class="chart" id="steps-period"></div>
     </article>
 
     <article class="card">
-      <h2>Steps by weekday</h2>
-      <p class="desc">Average daily steps</p>
+      <h2 data-i18n="stepsByWeekday">Steps by weekday</h2>
+      <p class="desc" data-i18n="avgDailySteps">Average daily steps</p>
       <div class="chart" id="weekday"></div>
     </article>
 
     <article class="card">
-      <h2>Sleep duration</h2>
+      <h2 data-i18n="sleepDuration">Sleep duration</h2>
       <p class="desc" id="sleep-desc"></p>
-      <div class="legend"><span><i style="background:var(--s1)"></i>Total sleep</span><span><i style="background:var(--s2)"></i>Deep sleep</span></div>
+      <div class="legend"><span><i style="background:var(--s1)"></i><span data-i18n="totalSleep">Total sleep</span></span><span><i style="background:var(--s2)"></i><span data-i18n="deepSleep">Deep sleep</span></span></div>
       <div class="chart" id="sleep-trend"></div>
     </article>
 
     <article class="card">
-      <h2>Sleep schedule</h2>
+      <h2 data-i18n="sleepSchedule">Sleep schedule</h2>
       <p class="desc" id="sched-desc"></p>
       <div class="chart" id="sleep-sched"></div>
     </article>
 
     <article class="card">
-      <h2>Resting heart rate</h2>
+      <h2 data-i18n="restingHr">Resting heart rate</h2>
       <p class="desc" id="rhr-desc"></p>
       <div class="chart" id="rhr"></div>
     </article>
 
     <article class="card">
-      <h2>Weight</h2>
+      <h2 data-i18n="weight">Weight</h2>
       <p class="desc" id="weight-desc"></p>
       <div class="legend" id="weight-legend"></div>
       <div class="chart" id="weight"></div>
@@ -298,35 +322,35 @@ footer a:hover { color: var(--ink); }
     </article>
 
     <article class="card">
-      <h2>Fat and lean mass</h2>
+      <h2 data-i18n="fatLean">Fat and lean mass</h2>
       <p class="desc" id="comp-desc"></p>
       <div id="comp"></div>
     </article>
 
     <article class="card">
-      <h2>Workouts</h2>
-      <p class="desc">Total hours by type, number of sessions in brackets</p>
+      <h2 data-i18n="workouts">Workouts</h2>
+      <p class="desc" data-i18n="workoutsDesc">Total hours by type, number of sessions in brackets</p>
       <div class="chart" id="workouts"></div>
     </article>
 
     <article class="card">
-      <h2>Records</h2>
+      <h2 data-i18n="records">Records</h2>
       <p class="desc" id="records-desc"></p>
       <ul class="records" id="records"></ul>
     </article>
 
     <article class="card wide">
       <h2 id="table-title">By year</h2>
-      <p class="desc">All the numbers behind the charts</p>
+      <p class="desc" data-i18n="tableDesc">All the numbers behind the charts</p>
       <div class="table-wrap"><table id="table"></table></div>
     </article>
   </section>
 
   <footer>
-    <p>Made by <a href="https://sacret.ru/">Anastasia Abakumova</a> and <a href="https://claude.com/claude-code">Claude Code</a>, Anthropic’s AI coding assistant. The data belongs to Anastasia.</p>
-    <p>See also <a href="https://sacret.github.io/habits/">My habits</a>, a companion page built the same way.</p>
-    <p>Data: Mi Band bracelets via Mi Fit / Zepp (2016–2021) and Mi Fitness (2017–2026) exports, normalized by <code>scripts/normalize.py</code>.</p>
-    <p>Heart rate starts in September 2018. Calories are left out because older and newer bands count them differently. Deep-sleep estimates differ between band generations. Nights shorter than 2 h or longer than 14 h (an unworn band scored as sleep) are left out of sleep figures. Fat and lean mass are the smart scale’s estimates; readings taken during pregnancy are left out.</p>
+    <p data-i18n-html="footMade">Made by <a href="https://sacret.ru/">Anastasia Abakumova</a> and <a href="https://claude.com/claude-code">Claude Code</a>, Anthropic’s AI coding assistant. The data belongs to Anastasia.</p>
+    <p data-i18n-html="footSeeAlso">See also <a href="https://sacret.github.io/habits/">My habits</a>, a companion page built the same way.</p>
+    <p data-i18n-html="footData">Data: Mi Band bracelets via Mi Fit / Zepp (2016–2021) and Mi Fitness (2017–2026) exports, normalized by <code>scripts/normalize.py</code>.</p>
+    <p data-i18n="footNotes">Heart rate starts in September 2018. Calories are left out because older and newer bands count them differently. Deep-sleep estimates differ between band generations. Nights shorter than 2 h or longer than 14 h (an unworn band scored as sleep) are left out of sleep figures. Fat and lean mass are the smart scale’s estimates; readings taken during pregnancy are left out.</p>
   </footer>
 </main>
 <div id="tip" role="status"></div>
@@ -334,16 +358,132 @@ footer a:hover { color: var(--ink); }
 <script>
 const RAW = __DATA__;
 
+// ------------------------------------------------------------------ language
+// English by default; the choice is remembered in this browser. Strings take arguments
+// where the wording depends on a number or on whether all years are shown (all = true).
+// Russian plurals: [one, few, many], picked by Intl.PluralRules.
+const ruRules = new Intl.PluralRules("ru");
+const ru = (n, [one, few, many]) => ({ one, few, many })[ruRules.select(n)] || few; // fractions take "few"
+const en = (n, one, other) => n === 1 ? one : other;
+const I18N = {
+  en: {
+    locale: "en-US",
+    months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    thousand: "K", million: "M", h: "h", min: "m", kg: "kg", km: "km", bpm: "bpm", bmi: "BMI",
+    source: "View source on GitHub", language: "Language", year: "Year", summary: "Summary", allYears: "All years",
+    dailySteps: "Daily steps", stepsOverTime: "Steps over time", avgDailySteps: "Average daily steps", stepsByWeekday: "Steps by weekday",
+    sleepDuration: "Sleep duration", totalSleep: "Total sleep", deepSleep: "Deep sleep", sleepSchedule: "Sleep schedule",
+    restingHr: "Resting heart rate", restingHrShort: "Resting HR", weight: "Weight", fatLean: "Fat and lean mass",
+    workouts: "Workouts", workoutsDesc: "Total hours by type, number of sessions in brackets", records: "Records",
+    tableDesc: "All the numbers behind the charts",
+    footMade: 'Made by <a href="https://sacret.ru/">Anastasia Abakumova</a> and <a href="https://claude.com/claude-code">Claude Code</a>, Anthropic’s AI coding assistant. The data belongs to Anastasia.',
+    footSeeAlso: 'See also <a href="https://sacret.github.io/habits/">My habits</a>, a companion page built the same way.',
+    footData: "Data: Mi Band bracelets via Mi Fit / Zepp (2016–2021) and Mi Fitness (2017–2026) exports, normalized by <code>scripts/normalize.py</code>.",
+    footNotes: "Heart rate starts in September 2018. Calories are left out because older and newer bands count them differently. Deep-sleep estimates differ between band generations. Nights shorter than 2 h or longer than 14 h (an unworn band scored as sleep) are left out of sleep figures. Fat and lean mass are the smart scale’s estimates; readings taken during pregnancy are left out.",
+    pregnancy: "Pregnancy",
+    noData: "No data", noDataPeriod: "No data for this period", noWorkouts: "No workouts in this period",
+    noComp: "No body composition readings in this period",
+    weekOf: d => `Week of ${d}`,
+    subtitleAll: (n, c, a, b) => `${n} ${en(c, "day", "days")} of Mi Band data, ${a}–${b}`,
+    subtitleYear: (n, c, y) => `${n} ${en(c, "day", "days")} of Mi Band data in ${y}`,
+    heatDesc: all => all ? "Every day since 2016, one row and colour per year, stronger colour = more steps" : "Every day of the year, stronger colour = more steps",
+    steps: n => en(n, "step", "steps"), stepsOnAvg: "steps on average",
+    stepsDesc: all => `Average daily steps per ${all ? "month" : "week"}`,
+    periodTitle: all => `Average steps by ${all ? "year" : "month"}`,
+    sleepDesc: all => `Average per night, by ${all ? "month" : "week"}`,
+    schedDesc: all => `Median bedtime to median wake-up, by ${all ? "year" : "month"}`,
+    nights: n => en(n, "night", "nights"),
+    bedtime: "typical bedtime", wakeup: "typical wake-up",
+    rhrDesc: all => `Average beats per minute at rest, by ${all ? "month" : "week"}`,
+    weightDesc: all => `Average weigh-in, kg, by ${all ? "month" : "week"}`,
+    beforePregnancy: "before pregnancy", backMark: "Back to pre-pregnancy weight",
+    beforeLegend: w => `Before pregnancy, ${w}`, backLegend: d => `Back to it ${d}`,
+    wrangeTitle: all => `Weight range by ${all ? "year" : "month"}`, wrangeDesc: "Lowest to highest day, kg; dot = median",
+    highest: "highest", median: "median", lowest: "lowest", daysWeighed: n => en(n, "day weighed", "days weighed"),
+    compDescEmpty: "Smart scale estimate, kg",
+    compDesc: (all, n, c) => `Smart scale estimate, average kg by ${all ? "month" : "week"}, ${n} ${en(c, "reading", "readings")}. Both panels share one scale.`,
+    fatMass: "Fat mass", leanMass: "Lean mass", leanMassLong: "Lean mass (muscle, water, bone)",
+    sessions: n => en(n, "session", "sessions"),
+    totalSteps: "Total steps", kmOver: (km, n, c) => `≈ ${km} km over ${n} ${en(c, "day", "days")}`,
+    avgPerDay: "Average per day", vs: y => ` vs ${y}`, medianOf: v => `median ${v}`,
+    sleepPerNight: "Sleep per night", deepOf: v => `deep ${v}`, rangeOf: (a, b) => `range ${a}–${b}`, notRecorded: "not recorded",
+    hours: (n, v) => `${v} hours`, noneRecorded: "none recorded", since: (w, d) => `${w} since ${d}`, latest: "latest",
+    recordsDesc: (all, y) => all ? "Best of all years" : `Best of ${y}`,
+    mostSteps: "Most steps in a day", mostActive: "Most active month", perDay: v => `${v} / day`,
+    longestRun: v => `Longest run of ${v}+ step days`, days: n => en(n, "day", "days"), ending: d => `ending ${d}`,
+    tenKDays: v => `Days with ${v}+ steps`, ofDays: v => `${v}% of days`, typicalWake: "Typical wake-up time",
+    cols: ["Period", "Avg steps", "Total km", "Sleep", "Deep sleep", "Bedtime", "Resting HR", "Weight", "Body fat", "Muscle", "Bone mass", "Visceral fat", "Workouts"],
+    level: v => `level ${v}`,
+    tableTitle: (all, y) => all ? "By year" : `By month, ${y}`,
+    workoutNames: { free_training: "Free training", stretch: "Stretching", outdoor_walking: "Outdoor walk", indoor_running: "Treadmill", pool_swimming: "Pool swim", backcountry_skiing: "Skiing" },
+  },
+  ru: {
+    locale: "ru-RU",
+    months: ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"],
+    monthsOf: ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"],
+    weekdays: ["пн", "вт", "ср", "чт", "пт", "сб", "вс"],
+    thousand: "К", million: "М", h: " ч", min: " мин", kg: "кг", km: "км", bpm: "уд/мин", bmi: "ИМТ",
+    source: "Исходный код на GitHub", language: "Язык", year: "Год", summary: "Сводка", allYears: "Все годы",
+    dailySteps: "Шаги по дням", stepsOverTime: "Шаги во времени", avgDailySteps: "Среднее число шагов в день", stepsByWeekday: "Шаги по дням недели",
+    sleepDuration: "Продолжительность сна", totalSleep: "Весь сон", deepSleep: "Глубокий сон", sleepSchedule: "Режим сна",
+    restingHr: "Пульс в покое", restingHrShort: "Пульс в покое", weight: "Вес", fatLean: "Жировая и безжировая масса",
+    workouts: "Тренировки", workoutsDesc: "Всего часов по видам, в скобках — число тренировок", records: "Рекорды",
+    tableDesc: "Все цифры, по которым построены графики",
+    footMade: 'Сделали <a href="https://sacret.ru/">Анастасия Абакумова</a> и <a href="https://claude.com/claude-code">Claude Code</a>, ИИ-ассистент для программирования от Anthropic. Данные принадлежат Анастасии.',
+    footSeeAlso: 'Смотрите также <a href="https://sacret.github.io/habits/">My habits</a> — страницу-компаньон, сделанную так же.',
+    footData: "Данные: браслеты Mi Band, экспорт из Mi Fit / Zepp (2016–2021) и Mi Fitness (2017–2026), приведённый к одному формату скриптом <code>scripts/normalize.py</code>.",
+    footNotes: "Пульс измеряется с сентября 2018 года. Калории не показаны: старые и новые браслеты считают их по-разному. Оценки глубокого сна у разных поколений браслетов отличаются. Ночи короче 2 ч или длиннее 14 ч (браслет лежал без дела, а засчитал сон) в данные о сне не входят. Жировая и безжировая масса — оценки умных весов; измерения во время беременности не учитываются.",
+    pregnancy: "Беременность",
+    noData: "Нет данных", noDataPeriod: "Нет данных за этот период", noWorkouts: "Нет тренировок за этот период",
+    noComp: "Нет измерений состава тела за этот период",
+    weekOf: d => `Неделя с ${d}`,
+    subtitleAll: (n, c, a, b) => `${n} ${ru(c, ["день", "дня", "дней"])} данных Mi Band, ${a}–${b}`,
+    subtitleYear: (n, c, y) => `${n} ${ru(c, ["день", "дня", "дней"])} данных Mi Band за ${y} год`,
+    heatDesc: all => all ? "Каждый день с 2016 года, по строке и цвету на год, чем ярче — тем больше шагов" : "Каждый день года, чем ярче — тем больше шагов",
+    steps: n => ru(n, ["шаг", "шага", "шагов"]), stepsOnAvg: "шагов в среднем",
+    stepsDesc: all => `Среднее число шагов в день, по ${all ? "месяцам" : "неделям"}`,
+    periodTitle: all => `Среднее число шагов по ${all ? "годам" : "месяцам"}`,
+    sleepDesc: all => `В среднем за ночь, по ${all ? "месяцам" : "неделям"}`,
+    schedDesc: all => `От медианного отбоя до медианного подъёма, по ${all ? "годам" : "месяцам"}`,
+    nights: n => ru(n, ["ночь", "ночи", "ночей"]),
+    bedtime: "обычный отбой", wakeup: "обычный подъём",
+    rhrDesc: all => `Среднее число ударов в минуту в покое, по ${all ? "месяцам" : "неделям"}`,
+    weightDesc: all => `Средний вес при взвешивании, кг, по ${all ? "месяцам" : "неделям"}`,
+    beforePregnancy: "до беременности", backMark: "Вернулась к весу до беременности",
+    beforeLegend: w => `До беременности, ${w}`, backLegend: d => `Вернулась к нему ${d}`,
+    wrangeTitle: all => `Разброс веса по ${all ? "годам" : "месяцам"}`, wrangeDesc: "От самого лёгкого дня до самого тяжёлого, кг; точка — медиана",
+    highest: "максимум", median: "медиана", lowest: "минимум", daysWeighed: n => ru(n, ["день со взвешиванием", "дня со взвешиванием", "дней со взвешиванием"]),
+    compDescEmpty: "Оценка умных весов, кг",
+    compDesc: (all, n, c) => `Оценка умных весов, среднее в кг по ${all ? "месяцам" : "неделям"}, ${n} ${ru(c, ["измерение", "измерения", "измерений"])}. У обеих панелей один масштаб.`,
+    fatMass: "Жировая масса", leanMass: "Безжировая масса", leanMassLong: "Безжировая масса (мышцы, вода, кости)",
+    sessions: n => ru(n, ["тренировка", "тренировки", "тренировок"]),
+    totalSteps: "Всего шагов", kmOver: (km, n, c) => `≈ ${km} км за ${n} ${ru(c, ["день", "дня", "дней"])}`,
+    avgPerDay: "В среднем за день", vs: y => ` к ${y}`, medianOf: v => `медиана ${v}`,
+    sleepPerNight: "Сон за ночь", deepOf: v => `глубокий ${v}`, rangeOf: (a, b) => `от ${a} до ${b}`, notRecorded: "не измерялся",
+    hours: (n, v) => `${v} ${ru(n, ["час", "часа", "часов"])}`, noneRecorded: "не записаны", since: (w, d) => `${w} с ${d}`, latest: "последнее",
+    recordsDesc: (all, y) => all ? "Лучшее за все годы" : `Лучшее за ${y} год`,
+    mostSteps: "Больше всего шагов за день", mostActive: "Самый активный месяц", perDay: v => `${v} в день`,
+    longestRun: v => `Самая длинная серия дней от ${v} шагов`, days: n => ru(n, ["день", "дня", "дней"]), ending: d => `по ${d}`,
+    tenKDays: v => `Дней от ${v} шагов`, ofDays: v => `${v}% дней`, typicalWake: "Обычное время подъёма",
+    cols: ["Период", "Шагов в день", "Всего км", "Сон", "Глубокий сон", "Отбой", "Пульс в покое", "Вес", "Жир", "Мышцы", "Костная масса", "Висцеральный жир", "Тренировки"],
+    level: v => `уровень ${v}`,
+    tableTitle: (all, y) => all ? "По годам" : `По месяцам, ${y}`,
+    workoutNames: { free_training: "Своб. тренировка", stretch: "Растяжка", outdoor_walking: "Прогулка", indoor_running: "Беговая дорожка", pool_swimming: "Бассейн", backcountry_skiing: "Лыжи" },
+  },
+};
+const LANGS = Object.keys(I18N);
+let lang = "en", L = I18N.en, MONTHS = L.months, WEEKDAYS = L.weekdays;
+try { const saved = localStorage.getItem("lang"); if (LANGS.includes(saved)) lang = saved; } catch (e) {}
+
 // ------------------------------------------------------------------ data
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAY = 86400000;
 
 const toT = d => Date.parse(d + "T00:00:00Z");
 const days = RAW.days.map(([d, steps, dist, sleep, deep, rhr, w, act]) =>
   ({ d, t: toT(d), y: +d.slice(0, 4), m: d.slice(0, 7), steps, dist, sleep, deep, rhr, w, act }));
 const nights = RAW.nights.map(([d, bed, wake, dur]) => ({ d, t: toT(d), y: +d.slice(0, 4), m: d.slice(0, 7), bed, wake, dur }));
-const PREGNANCY = { from: "2023-05-31", to: "2024-03-01", label: "Pregnancy" };
+const PREGNANCY = { from: "2023-05-31", to: "2024-03-01", get label() { return L.pregnancy; } };
 // The scale's body-fat estimate means nothing during pregnancy, so those readings are left out.
 const comp = RAW.comp.map(([d, w, fat, muscle, bone, visceral]) => ({ d, t: toT(d), y: +d.slice(0, 4), m: d.slice(0, 7), fat: w * fat / 100, lean: w * (1 - fat / 100), fatPct: fat, muscle, bone, visceral }))
   .filter(x => x.t < toT(PREGNANCY.from) || x.t > toT(PREGNANCY.to));
@@ -358,14 +498,16 @@ const vals = (list, f) => list.map(x => x[f]).filter(v => v != null);
 const sum = a => a.reduce((s, v) => s + v, 0);
 const mean = a => a.length ? sum(a) / a.length : null;
 const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), i = s.length >> 1; return s.length % 2 ? s[i] : (s[i - 1] + s[i]) / 2; };
-const fmtInt = v => v == null ? "–" : Math.round(v).toLocaleString("en-US");
-const fmt1 = v => v == null ? "–" : v.toLocaleString("en-US", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
-const compact = v => v == null ? "–" : Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + "M" : Math.abs(v) >= 1e4 ? Math.round(v / 1e3) + "K" : Math.abs(v) >= 1e3 ? (v / 1e3).toFixed(1).replace(".0", "") + "K" : String(Math.round(v));
-const fmtHM = m => { if (m == null) return "–"; m = Math.round(m); return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`; };
+const fmtInt = v => v == null ? "–" : Math.round(v).toLocaleString(L.locale);
+const fmt1 = v => v == null ? "–" : v.toLocaleString(L.locale, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+const fmtMax1 = v => v.toLocaleString(L.locale, { maximumFractionDigits: 1 });
+const compact = v => v == null ? "–" : Math.abs(v) >= 1e6 ? fmtMax1(+(v / 1e6).toFixed(v >= 1e7 ? 0 : 1)) + L.million : Math.abs(v) >= 1e4 ? Math.round(v / 1e3) + L.thousand : Math.abs(v) >= 1e3 ? fmtMax1(+(v / 1e3).toFixed(1)) + L.thousand : String(Math.round(v));
+const fmtHM = m => { if (m == null) return "–"; m = Math.round(m); return `${Math.floor(m / 60)}${L.h} ${String(m % 60).padStart(2, "0")}${L.min}`; };
 const fmtClock = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; };
-const fmtDate = d => { const t = new Date(toT(d)); return `${WEEKDAYS[(t.getUTCDay() + 6) % 7]}, ${t.getUTCDate()} ${MONTHS[t.getUTCMonth()]} ${t.getUTCFullYear()}`; };
+// "Mon, 3 Jan 2024", or without the weekday; Russian puts the month in the genitive: "3 января 2024"
+const fmtDate = (d, weekday = true) => { const t = new Date(toT(d)); return `${weekday ? WEEKDAYS[(t.getUTCDay() + 6) % 7] + ", " : ""}${t.getUTCDate()} ${(L.monthsOf || MONTHS)[t.getUTCMonth()]} ${t.getUTCFullYear()}`; };
 const bmi = w => w / RAW.height ** 2;
-const fmtKgBmi = w => `${fmt1(w)} kg · BMI ${fmt1(bmi(w))}`;
+const fmtKgBmi = w => `${fmt1(w)} ${L.kg} · ${L.bmi} ${fmt1(bmi(w))}`;
 const inRange = list => year == null ? list : list.filter(x => x.y === year);
 
 // Pre-pregnancy weight: average weigh-in over the 3 months before. "Back to it": first day after
@@ -438,7 +580,7 @@ function bucketLabel(t) {
   const d = new Date(t);
   if (year == null) return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
   const mon = new Date(t - 3 * DAY);
-  return `Week of ${mon.getUTCDate()} ${MONTHS[mon.getUTCMonth()]}`;
+  return L.weekOf(`${mon.getUTCDate()} ${(L.monthsOf || MONTHS)[mon.getUTCMonth()]}`);
 }
 function series(list, field, agg = mean) {
   const g = new Map();
@@ -452,7 +594,7 @@ function series(list, field, agg = mean) {
 // ------------------------------------------------------------------ charts
 const HEIGHT = 200, M = { l: 44, r: 12, t: 10, b: 24 };
 
-function emptyChart(host, msg = "No data for this period") {
+function emptyChart(host, msg = L.noDataPeriod) {
   host.replaceChildren(h("div", { className: "empty", textContent: msg }));
 }
 
@@ -603,7 +745,7 @@ function rangeChart(host, { items }) {
     const hit = el("rect", { x: cx - band / 2, y: M.t, width: band, height: H - M.t - M.b, fill: "transparent" }, svg);
     hit.addEventListener("pointermove", e => {
       bar.style.opacity = 0.75;
-      showTip(e, it.title, [{ value: fmtClock(it.bed), label: "typical bedtime" }, { value: fmtClock(it.wake), label: "typical wake-up" }]);
+      showTip(e, it.title, [{ value: fmtClock(it.bed), label: L.bedtime }, { value: fmtClock(it.wake), label: L.wakeup }]);
     });
     hit.addEventListener("pointerleave", () => { bar.style.opacity = 1; hideTip(); });
   });
@@ -634,8 +776,8 @@ function spanChart(host, { items, fmt, height = HEIGHT }) {
     const hit = el("rect", { x: cx - band / 2, y: M.t, width: band, height: H - M.t - M.b, fill: "transparent" }, svg);
     hit.addEventListener("pointermove", e => {
       g.style.opacity = 0.75;
-      showTip(e, it.title, [{ value: fmt(it.hi), label: "highest" }, { color: "var(--s1)", value: fmt(it.mid), label: "median" },
-        { value: fmt(it.lo), label: "lowest" }, { value: String(it.n), label: it.n === 1 ? "day weighed" : "days weighed" }]);
+      showTip(e, it.title, [{ value: fmt(it.hi), label: L.highest }, { color: "var(--s1)", value: fmt(it.mid), label: L.median },
+        { value: fmt(it.lo), label: L.lowest }, { value: String(it.n), label: L.daysWeighed(it.n) }]);
     });
     hit.addEventListener("pointerleave", () => { g.style.opacity = 1; hideTip(); });
   });
@@ -643,7 +785,7 @@ function spanChart(host, { items, fmt, height = HEIGHT }) {
 }
 
 function hbarChart(host, { items }) {
-  if (!items.length) return emptyChart(host, "No workouts in this period");
+  if (!items.length) return emptyChart(host, L.noWorkouts);
   const W = host.clientWidth, row = 30, labelW = Math.min(130, W * 0.35), valW = 72;
   const H = items.length * row;
   const max = Math.max(...items.map(i => i.value));
@@ -652,9 +794,9 @@ function hbarChart(host, { items }) {
     const y = i * row, bh = 14, len = Math.max(2, (W - labelW - valW) * it.value / max);
     text(svg, 0, y + row / 2 + 4, it.label, { class: "vlabel", style: "font-size:13px" });
     const bar = el("path", { d: `M${labelW},${y + (row - bh) / 2}h${len - 4}q4,0 4,4v${bh - 8}q0,4 -4,4h${4 - len}z`, fill: "var(--s1)" }, svg);
-    text(svg, labelW + len + 8, y + row / 2 + 4, `${fmt1(it.value)} h (${it.count})`, { class: "vlabel" });
+    text(svg, labelW + len + 8, y + row / 2 + 4, `${fmt1(it.value)}${L.h} (${it.count})`, { class: "vlabel" });
     const hit = el("rect", { x: 0, y, width: W, height: row, fill: "transparent" }, svg);
-    hit.addEventListener("pointermove", e => { bar.style.opacity = 0.75; showTip(e, it.label, [{ color: "var(--s1)", value: `${fmt1(it.value)} h`, label: `${it.count} sessions` }]); });
+    hit.addEventListener("pointermove", e => { bar.style.opacity = 0.75; showTip(e, it.label, [{ color: "var(--s1)", value: `${fmt1(it.value)}${L.h}`, label: `${it.count} ${L.sessions(it.count)}` }]); });
     hit.addEventListener("pointerleave", () => { bar.style.opacity = 1; hideTip(); });
   });
   host.replaceChildren(svg);
@@ -662,7 +804,7 @@ function hbarChart(host, { items }) {
 
 const BINS = [3000, 6000, 9000, 12000];
 const MIN_CELL = 14; // px; smaller cells are too fiddly to read or tap
-const BIN_LABELS = ["< 3K", "3–6K", "6–9K", "9–12K", "12K+"];
+const binLabels = () => [`< ${compact(BINS[0])}`, ...BINS.slice(1).map((b, i) => `${BINS[i] / 1e3}–${compact(b)}`), `${compact(BINS[BINS.length - 1])}+`];
 // Each year has its own hue, spread evenly around the colour wheel starting at blue;
 // within a year, lightness carries the step count.
 const yearHue = yy => (250 + (yy - YEARS[0]) * 360 / YEARS.length) % 360;
@@ -687,7 +829,7 @@ function heatmap(host) {
     const top = head + r * blockH, jan1 = Date.UTC(yy, 0, 1), off = (new Date(jan1).getUTCDay() + 6) % 7;
     if (year == null) text(lax, 0, top + 3.5 * pitch + 4, String(yy));
     else {
-      ["Mon", "", "Wed", "", "Fri", "", ""].forEach((s, i) => s && text(lax, 0, top + i * pitch + size / 2 + 4, s));
+      [WEEKDAYS[0], "", WEEKDAYS[2], "", WEEKDAYS[4], "", ""].forEach((s, i) => s && text(lax, 0, top + i * pitch + size / 2 + 4, s));
       for (let mo = 0; mo < 12; mo++) {
         const doy = (Date.UTC(yy, mo, 1) - jan1) / DAY;
         text(ax, Math.floor((doy + off) / 7) * px, 11, px * 4.3 < 28 ? MONTHS[mo][0] : MONTHS[mo]);
@@ -711,15 +853,16 @@ function heatmap(host) {
     ring.setAttribute("x", col * px - 1); ring.setAttribute("y", head + r * blockH + wd * pitch - 1);
     const rec = byDate.get(d);
     showTip(e, fmtDate(d), rec && rec.steps != null
-      ? [{ value: fmtInt(rec.steps), label: "steps" }, ...(rec.dist ? [{ value: fmt1(rec.dist / 1000), label: "km" }] : [])]
-      : [{ value: "No data" }]);
+      ? [{ value: fmtInt(rec.steps), label: L.steps(rec.steps) }, ...(rec.dist ? [{ value: fmt1(rec.dist / 1000), label: L.km }] : [])]
+      : [{ value: L.noData }]);
   });
   svg.addEventListener("pointerleave", () => { ring.style.display = "none"; hideTip(); });
 
   const legend = h("div", { className: "legend" });
   legend.style.marginTop = "10px";
   const sw = (c, s) => { const i = h("i", { className: "box" }); i.style.background = c; return h("span", {}, i, s); };
-  legend.append(sw("var(--h0)", "No data"));
+  legend.append(sw("var(--h0)", L.noData));
+  const BIN_LABELS = binLabels();
   for (let i = 0; i < BIN_LABELS.length; i++) {
     // one swatch per bin, striped with every visible year's hue
     const sh = years.map(yy => shade(i + 1, yy)), n = sh.length;
@@ -737,7 +880,7 @@ function heatmap(host) {
 function tile(label, value, sub, hero) {
   const t = h("div", { className: "tile" + (hero ? " hero" : "") },
     h("div", { className: "label", textContent: label }),
-    h("div", { className: "value", textContent: value }));
+    h("div", { className: "value" }, ...value.split(/(\p{L}[\p{L}/]*)/u).map((s, i) => i % 2 ? h("span", { className: "u", textContent: s }) : s)));
   if (sub) t.append(sub instanceof Node ? sub : h("div", { className: "sub", textContent: sub }));
   return t;
 }
@@ -750,19 +893,19 @@ function renderTiles(D, N, Wk) {
     if (prev && avg) {
       const pct = (avg / prev - 1) * 100;
       delta = h("div", { className: "sub" },
-        h("span", { className: pct >= 0 ? "up" : "", textContent: `${pct >= 0 ? "▲ +" : "▼ "}${pct.toFixed(0)}%` }), ` vs ${year - 1}`);
+        h("span", { className: pct >= 0 ? "up" : "", textContent: `${pct >= 0 ? "▲ +" : "▼ "}${pct.toFixed(0)}%` }), L.vs(year - 1));
     }
   }
   const ws = D.filter(x => x.w != null);
-  const wSub = ws.length > 1 ? `${ws[ws.length - 1].w - ws[0].w >= 0 ? "+" : ""}${fmt1(ws[ws.length - 1].w - ws[0].w)} kg since ${fmtDate(ws[0].d).slice(5)}` : "";
+  const wSub = ws.length > 1 ? L.since(`${ws[ws.length - 1].w - ws[0].w >= 0 ? "+" : ""}${fmt1(ws[ws.length - 1].w - ws[0].w)} ${L.kg}`, fmtDate(ws[0].d, false)) : "";
   const hours = sum(Wk.map(w => w.dur)) / 60;
   document.getElementById("tiles").replaceChildren(
-    tile("Total steps", fmtInt(sum(steps)), `≈ ${fmtInt(sum(vals(D, "dist")) / 1000)} km over ${fmtInt(steps.length)} days`, true),
-    tile("Average per day", fmtInt(avg), delta || `median ${fmtInt(median(steps))}`),
-    tile("Sleep per night", fmtHM(mean(vals(N, "dur"))), `deep ${fmtHM(mean(vals(D, "deep")))}`),
-    tile("Resting heart rate", D.some(x => x.rhr) ? `${fmtInt(mean(vals(D, "rhr")))} bpm` : "–", D.some(x => x.rhr) ? `range ${Math.min(...vals(D, "rhr"))}–${Math.max(...vals(D, "rhr"))}` : "not recorded"),
-    tile("Workouts", fmtInt(Wk.length), Wk.length ? `${fmt1(hours)} hours` : "none recorded"),
-    tile("Weight", ws.length ? `${fmt1(ws[ws.length - 1].w)} kg` : "–", ws.length ? `BMI ${fmt1(bmi(ws[ws.length - 1].w))} · ${wSub || "latest"}` : "not recorded"),
+    tile(L.totalSteps, fmtInt(sum(steps)), L.kmOver(fmtInt(sum(vals(D, "dist")) / 1000), fmtInt(steps.length), steps.length), true),
+    tile(L.avgPerDay, fmtInt(avg), delta || L.medianOf(fmtInt(median(steps)))),
+    tile(L.sleepPerNight, fmtHM(mean(vals(N, "dur"))), L.deepOf(fmtHM(mean(vals(D, "deep"))))),
+    tile(L.restingHr, D.some(x => x.rhr) ? `${fmtInt(mean(vals(D, "rhr")))} ${L.bpm}` : "–", D.some(x => x.rhr) ? L.rangeOf(Math.min(...vals(D, "rhr")), Math.max(...vals(D, "rhr"))) : L.notRecorded),
+    tile(L.workouts, fmtInt(Wk.length), Wk.length ? L.hours(+hours.toFixed(1), fmt1(hours)) : L.noneRecorded),
+    tile(L.weight, ws.length ? `${fmt1(ws[ws.length - 1].w)} ${L.kg}` : "–", ws.length ? `${L.bmi} ${fmt1(bmi(ws[ws.length - 1].w))} · ${wSub || L.latest}` : L.notRecorded),
   );
 }
 
@@ -780,7 +923,7 @@ function periodItems(list, field) {
 function renderRecords(D) {
   const ul = document.getElementById("records");
   const withSteps = D.filter(x => x.steps != null);
-  if (!withSteps.length) return ul.replaceChildren(h("li", { className: "k", textContent: "No data for this period" }));
+  if (!withSteps.length) return ul.replaceChildren(h("li", { className: "k", textContent: L.noDataPeriod }));
   const best = withSteps.reduce((a, b) => b.steps > a.steps ? b : a);
   const months = new Map();
   for (const x of withSteps) (months.get(x.m) || months.set(x.m, []).get(x.m)).push(x.steps);
@@ -796,18 +939,18 @@ function renderRecords(D) {
   const earliest = N.length ? median(N.map(n => n.wake)) : null;
   const item = (k, v, small) => h("li", {}, h("span", { className: "k", textContent: k }), h("span", { className: "v" }, v, small ? h("small", { textContent: small }) : null));
   ul.replaceChildren(
-    item("Most steps in a day", `${fmtInt(best.steps)}`, fmtDate(best.d)),
-    item("Most active month", `${fmtInt(bmv)} / day`, `${MONTHS[+bm.slice(5) - 1]} ${bm.slice(0, 4)}`),
-    item("Longest run of 6,000+ step days", `${streak} days`, streakEnd ? `ending ${fmtDate(streakEnd).slice(5)}` : ""),
-    item("Days with 10,000+ steps", `${fmtInt(tenK)}`, `${(tenK / withSteps.length * 100).toFixed(1)}% of days`),
-    ...(earliest != null ? [item("Typical wake-up time", fmtClock(earliest), `${fmtInt(N.length)} nights`)] : []),
+    item(L.mostSteps, `${fmtInt(best.steps)}`, fmtDate(best.d)),
+    item(L.mostActive, L.perDay(fmtInt(bmv)), `${MONTHS[+bm.slice(5) - 1]} ${bm.slice(0, 4)}`),
+    item(L.longestRun(fmtInt(6000)), `${streak} ${L.days(streak)}`, streakEnd ? L.ending(fmtDate(streakEnd, false)) : ""),
+    item(L.tenKDays(fmtInt(10000)), `${fmtInt(tenK)}`, L.ofDays(fmt1(tenK / withSteps.length * 100))),
+    ...(earliest != null ? [item(L.typicalWake, fmtClock(earliest), `${fmtInt(N.length)} ${L.nights(N.length)}`)] : []),
   );
 }
 
 function renderTable(D, N, Wk) {
   const keys = year == null ? YEARS.map(String) : MONTHS.map((_, i) => `${year}-${String(i + 1).padStart(2, "0")}`);
   const pick = (list, k) => list.filter(x => (year == null ? String(x.y) : x.m) === k);
-  const cols = ["Period", "Avg steps", "Total km", "Sleep", "Deep sleep", "Bedtime", "Resting HR", "Weight", "Body fat", "Muscle", "Bone mass", "Visceral fat", "Workouts"];
+  const cols = L.cols;
   const C = inRange(comp), pct = v => v == null ? "–" : `${fmt1(v)}%`;
   const table = document.getElementById("table");
   const thead = h("thead", {}, h("tr", {}, ...cols.map(c => h("th", { scope: "col", textContent: c }))));
@@ -822,24 +965,22 @@ function renderTable(D, N, Wk) {
       fmtInt(mean(vals(d, "steps"))), fmtInt(sum(vals(d, "dist")) / 1000),
       fmtHM(mean(vals(n, "dur"))), fmtHM(mean(vals(d, "deep"))), bed == null ? "–" : fmtClock(bed),
       rhr == null ? "–" : fmtInt(rhr), wt == null ? "–" : fmt1(wt),
-      pct(mean(vals(c, "fatPct"))), pct(mean(vals(c, "muscle"))), bone == null ? "–" : `${bone.toFixed(2)} kg`, visc == null ? "–" : `level ${Math.round(visc)}`,
+      pct(mean(vals(c, "fatPct"))), pct(mean(vals(c, "muscle"))), bone == null ? "–" : `${bone.toLocaleString(L.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${L.kg}`, visc == null ? "–" : L.level(Math.round(visc)),
       w.length ? String(w.length) : "–",
     ];
     tbody.append(h("tr", {}, ...cells.map((c, i) => i === 0 ? h("th", { scope: "row", textContent: c }) : h("td", { textContent: c, className: c === "–" ? "na" : "" }))));
   }
   table.replaceChildren(thead, tbody);
-  document.getElementById("table-title").textContent = year == null ? "By year" : `By month, ${year}`;
+  document.getElementById("table-title").textContent = L.tableTitle(year == null, year);
 }
 
-const WORKOUT_NAMES = { free_training: "Free training", stretch: "Stretching", outdoor_walking: "Outdoor walk", indoor_running: "Treadmill", pool_swimming: "Pool swim", backcountry_skiing: "Skiing" };
-
-function renderComp(C, per) {
+function renderComp(C) {
   const host = document.getElementById("comp"), desc = document.getElementById("comp-desc");
   if (!C.length) {
-    desc.textContent = "Smart scale estimate, kg";
-    return emptyChart(host, "No body composition readings in this period");
+    desc.textContent = L.compDescEmpty;
+    return emptyChart(host, L.noComp);
   }
-  desc.textContent = `Smart scale estimate, average kg by ${per}, ${fmtInt(C.length)} readings. Both panels share one scale.`;
+  desc.textContent = L.compDesc(year == null, fmtInt(C.length), C.length);
   const fat = series(C, "fat"), lean = series(C, "lean");
   // same kg per pixel in both panels, so a change in one compares directly with the other
   const ext = pts => [Math.min(...pts.map(p => p[1])), Math.max(...pts.map(p => p[1]))];
@@ -848,67 +989,67 @@ function renderComp(C, per) {
   const n = Math.max(Math.ceil(fh / step) - Math.floor(fl / step), Math.ceil(lh / step) - Math.floor(ll / step), 1);
   const ticksFrom = lo => Array.from({ length: n + 1 }, (_, i) => +((Math.floor(lo / step) + i) * step).toFixed(10));
   const fatBox = h("div", { className: "chart" }), leanBox = h("div", { className: "chart" });
-  host.replaceChildren(h("p", { className: "panel-label", textContent: "Fat mass" }), fatBox,
-    h("p", { className: "panel-label", textContent: "Lean mass (muscle, water, bone)" }), leanBox);
-  const opts = { yFmt: v => `${fmt1(v)} kg`, tickFmt: v => String(v), bands: [PREGNANCY], height: 130 };
-  lineChart(fatBox, { ...opts, lines: [{ name: "Fat mass", color: "var(--s2)", pts: fat }], ticks: ticksFrom(fl) });
-  lineChart(leanBox, { ...opts, lines: [{ name: "Lean mass", color: "var(--s1)", pts: lean }], ticks: ticksFrom(ll) });
+  host.replaceChildren(h("p", { className: "panel-label", textContent: L.fatMass }), fatBox,
+    h("p", { className: "panel-label", textContent: L.leanMassLong }), leanBox);
+  const opts = { yFmt: v => `${fmt1(v)} ${L.kg}`, tickFmt: v => String(v), bands: [PREGNANCY], height: 130 };
+  lineChart(fatBox, { ...opts, lines: [{ name: L.fatMass, color: "var(--s2)", pts: fat }], ticks: ticksFrom(fl) });
+  lineChart(leanBox, { ...opts, lines: [{ name: L.leanMass, color: "var(--s1)", pts: lean }], ticks: ticksFrom(ll) });
 }
 
 function render() {
   hideTip();
   const D = inRange(days), N = inRange(nights), Wk = inRange(workouts);
-  const per = year == null ? "month" : "week";
-  document.getElementById("subtitle").textContent = year == null
-    ? `${days.length.toLocaleString("en-US")} days of Mi Band data, ${YEARS[0]}–${YEARS[YEARS.length - 1]}`
-    : `${D.length} days of Mi Band data in ${year}`;
+  const all = year == null;
+  document.getElementById("subtitle").textContent = all
+    ? L.subtitleAll(fmtInt(days.length), days.length, YEARS[0], YEARS[YEARS.length - 1])
+    : L.subtitleYear(fmtInt(D.length), D.length, year);
   for (const b of document.querySelectorAll("#filters button")) b.setAttribute("aria-pressed", String(b.dataset.year === String(year ?? "all")));
 
   renderTiles(D, N, Wk);
-  document.getElementById("heat-desc").textContent = year == null ? "Every day since 2016, one row and colour per year, stronger colour = more steps" : "Every day of the year, stronger colour = more steps";
+  document.getElementById("heat-desc").textContent = L.heatDesc(all);
   heatmap(document.getElementById("heatmap"));
 
-  document.getElementById("steps-desc").textContent = `Average daily steps per ${per}`;
-  lineChart(document.getElementById("steps-trend"), { lines: [{ name: "Steps", color: "var(--s1)", pts: series(D, "steps") }], yFmt: v => `${fmtInt(v)} steps`, tickFmt: compact, zero: true });
+  document.getElementById("steps-desc").textContent = L.stepsDesc(all);
+  lineChart(document.getElementById("steps-trend"), { lines: [{ name: L.dailySteps, color: "var(--s1)", pts: series(D, "steps") }], yFmt: v => `${fmtInt(v)} ${L.steps(Math.round(v))}`, tickFmt: compact, zero: true });
 
-  document.getElementById("period-title").textContent = year == null ? "Average steps by year" : "Average steps by month";
+  document.getElementById("period-title").textContent = L.periodTitle(all);
   columnChart(document.getElementById("steps-period"), { items: periodItems(D, "steps"), yFmt: v => fmtInt(v), labelFmt: compact });
 
   const wd = WEEKDAYS.map((label, i) => ({ label, value: mean(vals(D.filter(x => (new Date(x.t).getUTCDay() + 6) % 7 === i), "steps")) }));
-  columnChart(document.getElementById("weekday"), { items: wd.map(w => ({ ...w, tipLabel: "steps on average" })), yFmt: fmtInt });
+  columnChart(document.getElementById("weekday"), { items: wd.map(w => ({ ...w, tipLabel: L.stepsOnAvg })), yFmt: fmtInt });
 
-  document.getElementById("sleep-desc").textContent = `Average per night, by ${per}`;
+  document.getElementById("sleep-desc").textContent = L.sleepDesc(all);
   lineChart(document.getElementById("sleep-trend"), {
-    lines: [{ name: "Total sleep", color: "var(--s1)", pts: series(N, "dur") }, { name: "Deep sleep", color: "var(--s2)", pts: series(D, "deep") }],
-    yFmt: fmtHM, tickFmt: v => `${v / 60}h`, zero: true, unit: 60,
+    lines: [{ name: L.totalSleep, color: "var(--s1)", pts: series(N, "dur") }, { name: L.deepSleep, color: "var(--s2)", pts: series(D, "deep") }],
+    yFmt: fmtHM, tickFmt: v => `${v / 60}${L.h}`, zero: true, unit: 60,
   });
 
-  document.getElementById("sched-desc").textContent = `Median bedtime to median wake-up, by ${year == null ? "year" : "month"}`;
+  document.getElementById("sched-desc").textContent = L.schedDesc(all);
   rangeChart(document.getElementById("sleep-sched"), {
     items: periodItems(N, "dur").filter(p => p.sub.length).map(p => ({
-      label: p.label, title: `${p.tipTitle} · ${p.sub.length} nights`,
+      label: p.label, title: `${p.tipTitle} · ${p.sub.length} ${L.nights(p.sub.length)}`,
       bed: median(p.sub.map(n => n.bed)), wake: median(p.sub.map(n => n.wake)) + 1440,
     })),
   });
 
-  document.getElementById("rhr-desc").textContent = `Average beats per minute at rest, by ${per}`;
-  lineChart(document.getElementById("rhr"), { lines: [{ name: "Resting HR", color: "var(--s1)", pts: series(D, "rhr") }], yFmt: v => `${fmtInt(v)} bpm`, tickFmt: v => String(v) });
+  document.getElementById("rhr-desc").textContent = L.rhrDesc(all);
+  lineChart(document.getElementById("rhr"), { lines: [{ name: L.restingHrShort, color: "var(--s1)", pts: series(D, "rhr") }], yFmt: v => `${fmtInt(v)} ${L.bpm}`, tickFmt: v => String(v) });
 
-  document.getElementById("weight-desc").textContent = `Average weigh-in, kg, by ${per}`;
+  document.getElementById("weight-desc").textContent = L.weightDesc(all);
   // the pre-pregnancy reference only where the pregnancy and the way back are in view
   const showPre = PRE_WEIGHT != null && (year == null || (year >= +PREGNANCY.from.slice(0, 4) && year <= (BACK ? BACK.y : year)));
-  const refs = showPre ? [{ v: PRE_WEIGHT, label: "before pregnancy" }] : [];
-  const marks = showPre && BACK ? [{ t: BACK.t, v: PRE_WEIGHT, label: "Back to pre-pregnancy weight" }] : [];
+  const refs = showPre ? [{ v: PRE_WEIGHT, label: L.beforePregnancy }] : [];
+  const marks = showPre && BACK ? [{ t: BACK.t, v: PRE_WEIGHT, label: L.backMark }] : [];
   const wLegend = document.getElementById("weight-legend");
   wLegend.style.display = showPre ? "" : "none";
   if (showPre) {
     const sw = (cls, s) => h("span", {}, h("i", { className: cls }), s);
-    wLegend.replaceChildren(sw("dash", `Before pregnancy, ${fmt1(PRE_WEIGHT)} kg`), ...(BACK ? [sw("ring", `Back to it ${fmtDate(BACK.d).slice(5)}`)] : []));
+    wLegend.replaceChildren(sw("dash", L.beforeLegend(`${fmt1(PRE_WEIGHT)} ${L.kg}`)), ...(BACK ? [sw("ring", L.backLegend(fmtDate(BACK.d, false)))] : []));
   }
-  lineChart(document.getElementById("weight"), { lines: [{ name: "Weight", color: "var(--s1)", pts: series(D, "w") }], yFmt: fmtKgBmi, tickFmt: v => String(v), bands: [PREGNANCY], refs, marks });
+  lineChart(document.getElementById("weight"), { lines: [{ name: L.weight, color: "var(--s1)", pts: series(D, "w") }], yFmt: fmtKgBmi, tickFmt: v => String(v), bands: [PREGNANCY], refs, marks });
 
-  document.getElementById("wrange-title").textContent = year == null ? "Weight range by year" : "Weight range by month";
-  document.getElementById("wrange-desc").textContent = `Lowest to highest day, kg; dot = median`;
+  document.getElementById("wrange-title").textContent = L.wrangeTitle(all);
+  document.getElementById("wrange-desc").textContent = L.wrangeDesc;
   spanChart(document.getElementById("weight-range"), {
     fmt: fmtKgBmi, height: 300,
     items: periodItems(D, "w").map(p => ({ ...p, ws: vals(p.sub, "w") })).filter(p => p.ws.length).map(p => ({
@@ -916,15 +1057,15 @@ function render() {
     })),
   });
 
-  renderComp(inRange(comp), per);
+  renderComp(inRange(comp));
 
   const types = new Map();
   for (const w of Wk) { const t = types.get(w.type) || types.set(w.type, { value: 0, count: 0 }).get(w.type); t.value += w.dur / 60; t.count++; }
   hbarChart(document.getElementById("workouts"), {
-    items: [...types].map(([k, v]) => ({ label: WORKOUT_NAMES[k] || k.replace(/_/g, " "), ...v })).sort((a, b) => b.value - a.value),
+    items: [...types].map(([k, v]) => ({ label: L.workoutNames[k] || k.replace(/_/g, " "), ...v })).sort((a, b) => b.value - a.value),
   });
 
-  document.getElementById("records-desc").textContent = year == null ? "Best of all years" : `Best of ${year}`;
+  document.getElementById("records-desc").textContent = L.recordsDesc(all, year);
   renderRecords(D);
   renderTable(D, N, Wk);
 }
@@ -932,7 +1073,7 @@ function render() {
 // ------------------------------------------------------------------ filters & boot
 const filters = document.getElementById("filters");
 for (const y of ["all", ...YEARS]) {
-  const b = h("button", { type: "button", textContent: y === "all" ? "All years" : String(y) });
+  const b = h("button", { type: "button", textContent: String(y) });
   b.dataset.year = String(y);
   b.addEventListener("click", () => go(y === "all" ? null : y));
   filters.append(b);
@@ -956,6 +1097,26 @@ function fromHash() {
 }
 addEventListener("hashchange", fromHash);
 addEventListener("popstate", fromHash);
+
+// ------------------------------------------------------------------ language switch
+const langNav = document.getElementById("lang");
+function applyLang() {
+  L = I18N[lang]; MONTHS = L.months; WEEKDAYS = L.weekdays;
+  document.documentElement.lang = lang;
+  for (const n of document.querySelectorAll("[data-i18n]")) n.textContent = L[n.dataset.i18n];
+  for (const n of document.querySelectorAll("[data-i18n-html]")) n.innerHTML = L[n.dataset.i18nHtml];
+  for (const n of document.querySelectorAll("[data-i18n-label]")) n.setAttribute("aria-label", L[n.dataset.i18nLabel]);
+  filters.firstChild.textContent = L.allYears;
+  for (const b of langNav.children) b.setAttribute("aria-pressed", String(b.dataset.lang === lang));
+}
+for (const b of langNav.children) b.addEventListener("click", () => {
+  if (b.dataset.lang === lang) return;
+  lang = b.dataset.lang;
+  try { localStorage.setItem("lang", lang); } catch (e) {}
+  applyLang();
+  render();
+  measure();
+});
 
 // ------------------------------------------------------------------ pinned bar
 // The bar pins the moment its full-size bottom reaches the top of the window: the compact
@@ -995,6 +1156,7 @@ addEventListener("keydown", e => {
 });
 let rz;
 addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { render(); measure(); }, 150); });
+applyLang();
 fromHash();
 </script>
 </body>
